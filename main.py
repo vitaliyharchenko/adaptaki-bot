@@ -12,7 +12,7 @@ from handlers import router
 # Включаем логирование, чтобы не пропустить важные сообщения
 logging.basicConfig(level=logging.INFO)
 
-# инициализация бота с настройкой разметки сообщений (HTML, Markdown)
+# инициализация бота с настройкой разметки сообщений (HTML)
 # мы используем HTML, чтобы избежать проблем с экранированием символов
 bot = Bot(token=config.BOT_TOKEN, parse_mode=ParseMode.HTML)
 
