@@ -7,7 +7,7 @@ from aiogram.fsm.storage.memory import MemoryStorage
 from aiogram.types import BotCommand
 
 import config
-from handlers import start, reg, other, question
+from handlers import start, other, question
 
 
 # Включаем логирование, чтобы не пропустить важные сообщения
@@ -39,7 +39,6 @@ async def main() -> None:
 
     # Регистриуем роутеры в диспетчере
     dp.include_router(start.router)
-    dp.include_router(reg.router)
     dp.include_router(question.router)
     dp.include_router(other.router)
 
