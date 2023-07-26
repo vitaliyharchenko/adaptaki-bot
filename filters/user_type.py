@@ -1,12 +1,12 @@
 from aiogram.filters import BaseFilter
 from aiogram.types import Message
 
-from urllib.request import urlopen
+from urllib.request import urlopen, Request
+from urllib.parse import urlencode
 import json
 
-
-# Словарь, в котором будут храниться данные пользователей
-users: dict = {}
+from db import database
+from api import get_user
 
 
 class UserTypeFilter(BaseFilter):
@@ -22,25 +22,25 @@ class UserTypeFilter(BaseFilter):
         user_id = message.from_user.id
         user_type = 'anon'
 
-        # если пользователя нет в массиве, то обращаемся на сервер
-        if user_id not in users:
+        user = database.get_user(user_id=user_id)
+
+        # если пользователя нет в базе - идем на сервер
+        if not user:
             try:
-                url = f'http://127.0.0.1:8000/users/check/telegram/{user_id}/'
-                response = urlopen(url)
-                user_data = json.load(response)
-                users[user_id] = user_data
+                user_data = get_user(user_id=user_id)
 
                 if user_data['is_staff']:
                     user_type = 'admin'
                 elif user_data['is_active']:
                     user_type = 'reg'
-            except:
-                pass
+                
+                database.set_user(user_id=user_id, data=user_data)
+            except Exception as e:
+                print("Except: ", e)
         else:
-            user_data = users[user_id]
-            if user_data['is_staff']:
+            if user['is_staff']:
                 user_type = 'admin'
-            elif user_data['is_active']:
+            elif user['is_active']:
                 user_type = 'reg'
 
         return user_type in self.user_types

@@ -28,7 +28,7 @@ class RegUser(StatesGroup):
     choosing_phone = State()
 
 
-@router.message(Command("start"), UserTypeFilter(user_types=['anon', 'reg']))
+@router.message(Command("start"), UserTypeFilter(user_types=['anon']))
 async def start_handler(msg: Message, state: FSMContext):
 
     kb = [
@@ -107,4 +107,5 @@ async def phone_chosen(message: Message, state: FSMContext):
     user_data = await state.get_data()
 
     await message.answer(f"Твой набор данных:{user_data}", reply_markup=types.ReplyKeyboardRemove())
+    user_data = await state.get_data()
     await state.clear()

@@ -19,8 +19,10 @@ async def set_main_menu(bot: Bot):
 
     # Создаем список с командами и их описанием для кнопки menu
     main_menu_commands = [
-        BotCommand(command='/reg',
-                   description='Регистрация'),
+        BotCommand(command='/start',
+                   description='Вернуться в начало'),
+        BotCommand(command='/menu',
+                   description='Главное меню'),
         BotCommand(command='/random',
                    description='Случайная задача')]
 
