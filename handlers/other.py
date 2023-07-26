@@ -19,6 +19,15 @@ async def token_handler(msg: Message):
         await msg.answer(f"Твоего токена нет в базе данных")
 
 
+@router.message(Command("profile"))
+async def profilr_handler(msg: Message):
+    user_data = database.get_user(user_id=msg.from_user.id)
+    if user_data:
+        await msg.answer(f"Твои данные: {user_data}")
+    else:
+        await msg.answer(f"Тебя нет в базе данных")
+
+
 @router.message()
 async def message_handler(msg: Message):
     await msg.answer(f"Неизвестная команда")
