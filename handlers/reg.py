@@ -45,6 +45,15 @@ async def cmd_reg(message: Message, state: FSMContext):
     await state.set_state(RegUser.choosing_first_name)
 
 
+@router.message(Command("reg"), UserTypeFilter(user_types=['reg']))
+async def cmd_reg_unused(message: Message, state: FSMContext):
+    await message.answer(
+        text="Ты уже зарегистрирован!",
+        reply_markup=types.ReplyKeyboardRemove()
+    )
+    await state.clear()
+
+
 @router.message(RegUser.choosing_first_name, F.text)
 async def first_name_chosen(message: Message, state: FSMContext):
     await state.update_data(first_name=message.text)
@@ -90,5 +99,5 @@ async def phone_chosen(message: Message, state: FSMContext):
 
     user_data = await state.get_data()
 
-    await message.answer(f"Твой набор данных:{user_data}")
+    await message.answer(f"Твой набор данных:{user_data}", reply_markup=types.ReplyKeyboardRemove())
     await state.clear()
