@@ -9,6 +9,8 @@ from aiogram.filters.callback_data import CallbackData
 from db import database
 from texts import Texts
 from filters.user_type import UserTypeFilter
+from handlers.question import QuestionCallbackFactory
+from callback_factories import TrainerCallbackFactory, QuestionCallbackFactory
 
 
 # создаём роутер для дальнешей привязки к нему обработчиков
@@ -16,13 +18,6 @@ router = Router()
 router.message.filter(
     UserTypeFilter(user_types=['reg', 'admin'])
 )
-
-# Фабрика коллбеков для обработки нажатий на экзамены
-class TrainerCallbackFactory(CallbackData, prefix='trainer'):
-    exam_id: int
-    se_id: int
-    sen_id: int
-    tag_id: int
 
 
 # формируем клавиатуру для выбора экзамена
@@ -58,7 +53,8 @@ def select_exam_keyboard() -> InlineKeyboardMarkup:
 
 
 @router.callback_query(TrainerCallbackFactory.filter(F.exam_id == 0))
-async def exam_choice_handler(callback: types.CallbackQuery, callback_data: TrainerCallbackFactory):
+async def exam_choice_handler(callback: types.CallbackQuery, callback_data: TrainerCallbackFactory, state: FSMContext):
+    state.update_data(chosen_exam_id=0, chosen_se_id=0, chosen_sen_id=0, chosen_exam_tag_id=0)
     await callback.message.edit_text(text="Выбирай экзамен", reply_markup=select_exam_keyboard())
 
 
@@ -100,8 +96,11 @@ def select_subject_keyboard(exam_id) -> InlineKeyboardMarkup:
 
 
 @router.callback_query(TrainerCallbackFactory.filter(F.exam_id != 0), TrainerCallbackFactory.filter(F.se_id == 0))
-async def subject_choice_handler(callback: types.CallbackQuery, callback_data: TrainerCallbackFactory):
+async def subject_choice_handler(callback: types.CallbackQuery, callback_data: TrainerCallbackFactory, state: FSMContext):
     exam_id = callback_data.exam_id
+
+    await state.update_data(chosen_exam_id=exam_id, chosen_se_id=0, chosen_sen_id=0, chosen_exam_tag_id=0)
+
     await callback.message.edit_text(text=f"Выбирай предмет:", reply_markup=select_subject_keyboard(callback_data.exam_id))
 
 
@@ -144,8 +143,10 @@ def select_num_keyboard(exam_id, se_id) -> InlineKeyboardMarkup:
 
 
 @router.callback_query(TrainerCallbackFactory.filter(F.se_id != 0), TrainerCallbackFactory.filter(F.sen_id == 0))
-async def num_choice_handler(callback: types.CallbackQuery, callback_data: TrainerCallbackFactory):
+async def num_choice_handler(callback: types.CallbackQuery, callback_data: TrainerCallbackFactory, state: FSMContext):
     exam_id, se_id = callback_data.exam_id, callback_data.se_id
+
+    await state.update_data(chosen_exam_id=exam_id, chosen_se_id=se_id, chosen_sen_id=0, chosen_exam_tag_id=0)
 
     se = database.get_subject_exam(exam_id=exam_id, se_id=se_id)
 
@@ -190,16 +191,21 @@ def select_tag_keyboard(exam_id, se_id, sen_id) -> InlineKeyboardMarkup:
 
 
 @router.callback_query(TrainerCallbackFactory.filter(F.sen_id != 0), TrainerCallbackFactory.filter(F.tag_id == 0))
-async def tag_choice_handler(callback: types.CallbackQuery, callback_data: TrainerCallbackFactory):
+async def tag_choice_handler(callback: types.CallbackQuery, callback_data: TrainerCallbackFactory, state: FSMContext):
     exam_id, se_id, sen_id = callback_data.exam_id, callback_data.se_id, callback_data.sen_id
+
+    await state.update_data(chosen_exam_id=exam_id, chosen_se_id=se_id, chosen_sen_id=sen_id, chosen_exam_tag_id=0)
+
     se = database.get_subject_exam(exam_id=exam_id, se_id=se_id)
     sen = database.get_subject_exam_number(exam_id=exam_id, se_id=se_id, sen_id=sen_id)
     await callback.message.edit_text(text=f"Номер {sen['num']} из {se['exam']['title']} по предмету {se['subject']['title']}\nТема: <b>{sen['title']}</b>\n<i>Доступно задач: {sen['questions_exist']}</i>", reply_markup=select_tag_keyboard(callback_data.exam_id, callback_data.se_id, callback_data.sen_id))
 
 
 @router.callback_query(TrainerCallbackFactory.filter(F.tag_id != 0))
-async def tag_handler(callback: types.CallbackQuery, callback_data: TrainerCallbackFactory):
+async def tag_handler(callback: types.CallbackQuery, callback_data: TrainerCallbackFactory, state: FSMContext):
     exam_id, se_id, sen_id, tag_id = callback_data.exam_id, callback_data.se_id, callback_data.sen_id, callback_data.tag_id
+
+    await state.update_data(chosen_exam_id=exam_id, chosen_se_id=se_id, chosen_sen_id=sen_id, chosen_exam_tag_id=tag_id)
 
     se = database.get_subject_exam(exam_id=exam_id, se_id=se_id)
     sen = database.get_subject_exam_number(exam_id=exam_id, se_id=se_id, sen_id=sen_id)
@@ -211,6 +217,10 @@ async def tag_handler(callback: types.CallbackQuery, callback_data: TrainerCallb
             se_id=se_id,
             sen_id=sen_id,
             tag_id=0
+        ).pack())],
+        [types.InlineKeyboardButton(text="Решить случайную задачу", callback_data=QuestionCallbackFactory(
+            exam_tag_id=tag_id,
+            question_id=0
         ).pack())]
     ]
     keyboard = types.InlineKeyboardMarkup(inline_keyboard=kb)
