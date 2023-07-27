@@ -41,6 +41,14 @@ def get_user(user_id):
     return user_data
 
 
+def reg_user(reg_data):
+    url = 'users/telegram/reg'
+    data = reg_data
+    data["secret_code"] = SECRET_CODE
+    user_data = api_request(url=url, data=data, method='POST')
+    return user_data
+
+
 def get_random_question(user_id):
     url = 'questions/random'
     question_data = api_request(url=url, user_id=user_id)

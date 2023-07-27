@@ -8,6 +8,8 @@ from aiogram.fsm.state import StatesGroup, State
 from aiogram.fsm.context import FSMContext
 
 from filters.user_type import UserTypeFilter
+from api import reg_user
+from db import database
 
 
 # создаём роутер для дальнешей привязки к нему обработчиков
@@ -89,7 +91,13 @@ CLASSES = (
 
 @router.message(RegUser.choosing_class, F.text)
 async def class_chosen(message: Message, state: FSMContext):
-    await state.update_data(class_of=message.text)
+    class_of = message.text
+
+    for cl in CLASSES:
+        if class_of == cl[1]:
+            class_of == cl[0]
+
+    await state.update_data(class_of=class_of)
 
     kb = [
         [types.KeyboardButton(text="Дать доступ", request_contact=True)]
@@ -106,6 +114,21 @@ async def phone_chosen(message: Message, state: FSMContext):
 
     user_data = await state.get_data()
 
-    await message.answer(f"Твой набор данных:{user_data}", reply_markup=types.ReplyKeyboardRemove())
-    user_data = await state.get_data()
-    await state.clear()
+    user_data["telegram_id"] = message.from_user.id
+    user_data["telegram_username"] = message.from_user.username
+
+    try:
+        user = reg_user(user_data)
+        database.set_user(user_id=message.from_user.id, data=user)
+
+        await message.answer(f"Успешная регистрация! {user}", reply_markup=types.ReplyKeyboardRemove())
+        await state.clear()
+    except Exception as e:
+        kb = [
+            [types.KeyboardButton(text="Начать регистрацию")]
+        ]
+        keyboard = types.ReplyKeyboardMarkup(keyboard=kb, resize_keyboard=True, one_time_keyboard=True)
+        await message.answer(f"Ошибка при регистрации: {e} \n\nДавай начнем заново", reply_markup=keyboard)
+        await state.set_state(RegUser.registration_need)
+        await state.clear()
+
