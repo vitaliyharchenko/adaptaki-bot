@@ -34,26 +34,24 @@ class RegUser(StatesGroup):
 async def start_handler(msg: Message, state: FSMContext):
 
     kb = [
-        [types.KeyboardButton(text="Начать регистрацию")]
+        [types.InlineKeyboardButton(text="Начать регистрацию", callback_data="reg_start")]
     ]
-    keyboard = types.ReplyKeyboardMarkup(keyboard=kb, resize_keyboard=True, one_time_keyboard=True)
+    keyboard = types.InlineKeyboardMarkup(inline_keyboard=kb)
 
     await msg.answer(f"Привет! Я бот с задачами ЕГЭ. Давай знакомиться!\n\nЧтобы воспользоваться мной, нужно пройти простую регистрацию.", reply_markup=keyboard)
     await state.set_state(RegUser.registration_need)
 
 
-@router.message(RegUser.registration_need, F.text == 'Начать регистрацию')
-async def cmd_reg(message: Message, state: FSMContext):
-    await message.answer(
-        text="Давай начнем! Напиши свое имя:",
-        reply_markup=types.ReplyKeyboardRemove()
-    )
-    # Устанавливаем пользователю состояние "выбирает название"
+@router.callback_query(RegUser.registration_need, F.data == 'reg_start')
+async def cmd_reg(callback: types.CallbackQuery, state: FSMContext):
     await state.set_state(RegUser.choosing_first_name)
+    await callback.message.edit_text(f"Давай начнем! Напиши свое имя:")
+    await callback.answer()
 
 
 @router.message(RegUser.choosing_first_name, F.text)
 async def first_name_chosen(message: Message, state: FSMContext):
+    print(f"First name: {message.text}")
     await state.update_data(first_name=message.text)
     await message.answer(
         text="Спасибо. Теперь, пожалуйста, введите фамилию:",
@@ -121,12 +119,12 @@ async def phone_chosen(message: Message, state: FSMContext):
         user = reg_user(user_data)
         database.set_user(user_id=message.from_user.id, data=user)
 
-        await message.answer(f"Успешная регистрация! {user}", reply_markup=types.ReplyKeyboardRemove())
+        await message.answer(f"{user['first_name']}, вы успешно зарегистрированы! \n\n Чтобы перейти в главное меню, нажмите /menu", reply_markup=types.ReplyKeyboardRemove())
         await state.clear()
     except Exception as e:
         kb = [
-            [types.KeyboardButton(text="Начать регистрацию")]
+            [types.InlineKeyboardButton(text="Начать регистрацию", callback_data="reg_start")]
         ]
-        keyboard = types.ReplyKeyboardMarkup(keyboard=kb, resize_keyboard=True, one_time_keyboard=True)
+        keyboard = types.InlineKeyboardMarkup(inline_keyboard=kb)
         await message.answer(f"Ошибка при регистрации: {e} \n\nДавай начнем заново", reply_markup=keyboard)
         await state.set_state(RegUser.registration_need)

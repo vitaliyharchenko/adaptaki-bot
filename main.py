@@ -7,7 +7,9 @@ from aiogram.fsm.storage.memory import MemoryStorage
 from aiogram.types import BotCommand
 
 import config
-from handlers import start, other, question
+from handlers import start, other, question, menu, trainer
+from db import database
+from api import get_exam_tree
 
 
 # Включаем логирование, чтобы не пропустить важные сообщения
@@ -23,8 +25,8 @@ async def set_main_menu(bot: Bot):
                    description='Вернуться в начало'),
         BotCommand(command='/menu',
                    description='Главное меню'),
-        BotCommand(command='/random',
-                   description='Случайная задача')]
+        BotCommand(command='/reset',
+                   description='Сброс данных')]
 
     await bot.set_my_commands(main_menu_commands)
 
@@ -42,10 +44,16 @@ async def main() -> None:
     # Регистриуем роутеры в диспетчере
     dp.include_router(start.router)
     dp.include_router(question.router)
+    dp.include_router(menu.router)
+    dp.include_router(trainer.router)
     dp.include_router(other.router)
 
     # Инициируем пункты меню для бота
     dp.startup.register(set_main_menu)
+
+    # Загружаем данные
+    exam_tree = get_exam_tree()
+    database.set_exam_tree(exam_tree=exam_tree)
 
     # Пропускаем накопившиеся апдейты и запускаем polling
     await bot.delete_webhook(drop_pending_updates=True)

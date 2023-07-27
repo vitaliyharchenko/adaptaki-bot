@@ -1,6 +1,7 @@
-from aiogram import Router
+from aiogram import Router, types
 from aiogram.filters import Command
 from aiogram.types import Message
+from aiogram.fsm.context import FSMContext
 
 from db import database
 
@@ -19,15 +20,27 @@ async def token_handler(msg: Message):
         await msg.answer(f"Твоего токена нет в базе данных")
 
 
-@router.message(Command("profile"))
+@router.message(Command("exam_tree"))
 async def profilr_handler(msg: Message):
-    user_data = database.get_user(user_id=msg.from_user.id)
-    if user_data:
-        await msg.answer(f"Твои данные: {user_data}")
+    exam_tree = database.exam_tree
+    if exam_tree:
+        print(exam_tree)
+        await msg.answer(f"Дерево экзаменов загружено!")
     else:
-        await msg.answer(f"Тебя нет в базе данных")
+        await msg.answer(f"Дерево экзаменов не загружено!")
+
+
+@router.message(Command("reset"))
+async def reset_handler(msg: Message, state: FSMContext):
+    state.clear()
+    await msg.answer(f"Данные сброшены")
 
 
 @router.message()
 async def message_handler(msg: Message):
     await msg.answer(f"Неизвестная команда")
+
+
+@router.callback_query()
+async def callback_handler(callback: types.CallbackQuery):
+    await callback.message.answer(text=f"Неизвестный callback: {callback.data}")

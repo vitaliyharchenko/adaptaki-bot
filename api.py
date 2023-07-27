@@ -35,10 +35,16 @@ def api_request(url, user_id=None, data={}, method='GET'):
 
 
 def get_user(user_id):
-    url = 'users/telegram/'
+    url = 'users/telegram'
     data = {"telegram_id": user_id, "secret_code": SECRET_CODE}
     user_data = api_request(url=url, data=data, method='POST')
     return user_data
+
+
+def get_exam_tree():
+    url = 'exam_tree/'
+    exam_tree = api_request(url=url)
+    return exam_tree
 
 
 def reg_user(reg_data):
