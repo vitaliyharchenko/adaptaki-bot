@@ -18,7 +18,7 @@ router = Router()
 
 @router.message(Command("start"), UserTypeFilter(user_types=['reg', 'admin']))
 async def start_handler(msg: Message):
-    await msg.answer(f"С возвращением!")
+    await msg.answer(f"С возвращением!", reply_markup=types.ReplyKeyboardRemove())
 
 
 # создаем конечный автомат для хранения остояний
@@ -95,7 +95,7 @@ async def class_chosen(message: Message, state: FSMContext):
 
     for cl in CLASSES:
         if class_of == cl[1]:
-            class_of == cl[0]
+            class_of = cl[0]
 
     await state.update_data(class_of=class_of)
 
@@ -130,5 +130,3 @@ async def phone_chosen(message: Message, state: FSMContext):
         keyboard = types.ReplyKeyboardMarkup(keyboard=kb, resize_keyboard=True, one_time_keyboard=True)
         await message.answer(f"Ошибка при регистрации: {e} \n\nДавай начнем заново", reply_markup=keyboard)
         await state.set_state(RegUser.registration_need)
-        await state.clear()
-
