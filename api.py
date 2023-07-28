@@ -10,7 +10,6 @@ SECRET_CODE = '228'
 
 async def get_token_from_state(state):
     state_data = await state.get_data()
-    print(state_data)
     user_data = state_data.get("user_data", None)
     token = user_data.get("token", None)
     return token
@@ -27,6 +26,7 @@ def api_request(url, token="", data={}, method='GET'):
     if method == 'GET':
         if data:
             query_string = urlencode(data)
+            full_url += f"?{query_string}"
             data = query_string.encode('ascii')
         req = Request(full_url, data, headers, method='GET')
     else:
