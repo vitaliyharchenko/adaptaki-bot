@@ -51,7 +51,6 @@ async def cmd_reg(callback: types.CallbackQuery, state: FSMContext):
 
 @router.message(RegUser.choosing_first_name, F.text)
 async def first_name_chosen(message: Message, state: FSMContext):
-    print(f"First name: {message.text}")
     await state.update_data(first_name=message.text)
     await message.answer(
         text="Спасибо. Теперь, пожалуйста, введите фамилию:",

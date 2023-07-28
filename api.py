@@ -70,4 +70,20 @@ def get_random_question(token, exam_tag_id=None):
         data["exam_tag_id"] = exam_tag_id
     question_data = api_request(url=url, token=token, data=data)
     return question_data
+
+
+def get_question(token, question_id, need_answer=False):
+    url = f'questions/{question_id}'
+    data = {}
+    if need_answer:
+        data["answer"] = need_answer
+    question_data = api_request(url=url, token=token, data=data)
+    return question_data
+
+
+def post_question_answer(token, question_id, answer):
+    url = f'questions/{question_id}/'
+    data = {"answer": answer}
+    verdict = api_request(url=url, token=token, data=data, method='POST')
+    return verdict
     
