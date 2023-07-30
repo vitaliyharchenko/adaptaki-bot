@@ -7,6 +7,7 @@ class TrainerCallbackFactory(CallbackData, prefix='trainer'):
     se_id: int
     sen_id: int
     tag_id: int
+    edit: bool
 
 
 # Фабрика коллбеков для обработки состояния с вопросами

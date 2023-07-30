@@ -17,25 +17,28 @@ router.message.filter(
 
 
 # клавиатура для главного меню
-main_kb = [
-    [types.InlineKeyboardButton(text="Тренажер с задачами", callback_data=TrainerCallbackFactory(
-            exam_id=0,
-            se_id=0,
-            sen_id=0,
-            tag_id=0
-        ).pack())],
-    [types.InlineKeyboardButton(text="Профиль", callback_data="menu_profile")]
-]
-main_keyboard = types.InlineKeyboardMarkup(inline_keyboard=main_kb)
+def main_kb(edit=False):
+    kb = [
+        [types.InlineKeyboardButton(text="Тренажер с задачами", callback_data=TrainerCallbackFactory(
+                exam_id=0,
+                se_id=0,
+                sen_id=0,
+                tag_id=0,
+                edit=edit
+            ).pack())],
+        [types.InlineKeyboardButton(text="Профиль", callback_data="menu_profile")]
+    ]
+    main_keyboard = types.InlineKeyboardMarkup(inline_keyboard=kb)
+    return main_keyboard
 
 @router.message(Command("menu"))
 async def menu_handler(msg: Message):
-    await msg.answer(f"Главное меню", reply_markup=main_keyboard)
+    await msg.answer(f"Главное меню", reply_markup=main_kb(edit=True))
 
 
 @router.callback_query(F.data=='menu')
 async def menu_callback_handler(callback: types.CallbackQuery):
-    await callback.message.edit_text(text="Главное меню", reply_markup=main_keyboard)
+    await callback.message.edit_text(text="Главное меню", reply_markup=main_kb(edit=True))
 
 
 @router.callback_query(F.data=='menu_profile')
